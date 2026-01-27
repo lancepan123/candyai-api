@@ -4,16 +4,19 @@ import { admins } from '../../db/schema/admins';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { FastifyInstance } from 'fastify';
+import { logAdminAction } from '../admins/admins.service';
 
 export const registerUser = async (app: FastifyInstance, body: any) => {
-    const { username, email, password } = body;
+    const { username, phone, password, avatarUrl } = body;
     const hashedPassword = await bcrypt.hash(password, 10);
     
     try {
         await db.insert(users).values({
             username,
-            email,
+            phone,
             passwordHash: hashedPassword,
+            avatarUrl,
+            status: 'active'
         });
         return { message: 'User registered' };
     } catch (e) {
@@ -21,6 +24,7 @@ export const registerUser = async (app: FastifyInstance, body: any) => {
     }
 }
 
+// Keep registerAdmin for internal/seed use, but it's not exposed in routes
 export const registerAdmin = async (app: FastifyInstance, body: any) => {
     const { username, password } = body;
     const hashedPassword = await bcrypt.hash(password, 10);
@@ -37,11 +41,15 @@ export const registerAdmin = async (app: FastifyInstance, body: any) => {
 }
 
 export const loginUser = async (app: FastifyInstance, body: any) => {
-    const { email, password } = body;
-    const user = await db.select().from(users).where(eq(users.email, email)).limit(1);
+    const { phone, password } = body;
+    const user = await db.select().from(users).where(eq(users.phone, phone)).limit(1);
     
     if (user.length === 0) {
         throw new Error('Invalid credentials');
+    }
+
+    if (user[0].status === 'banned') {
+        throw new Error('User is banned');
     }
     
     const isValid = await bcrypt.compare(password, user[0].passwordHash);
@@ -60,11 +68,18 @@ export const loginAdmin = async (app: FastifyInstance, body: any) => {
     if (admin.length === 0) {
         throw new Error('Invalid credentials');
     }
+
+    if (admin[0].status === 'banned') {
+        throw new Error('Admin account is disabled');
+    }
     
     const isValid = await bcrypt.compare(password, admin[0].passwordHash);
     if (!isValid) {
         throw new Error('Invalid credentials');
     }
+    
+    // Log successful login
+    await logAdminAction(admin[0].id, 'login', { username });
     
     const token = app.jwt.sign({ id: admin[0].id, role: 'admin' });
     return { token };
