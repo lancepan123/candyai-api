@@ -1,8 +1,9 @@
+<!-- ❗Errors in the form are set on line 60 -->
 <script setup lang="ts">
+import { useAbility } from '@casl/vue'
+import { VForm } from 'vuetify/components/VForm'
 import AuthProvider from '@/views/pages/authentication/AuthProvider.vue'
 import { useGenerateImageVariant } from '@core/composable/useGenerateImageVariant'
-import authV2LoginIllustrationBorderedDark from '@images/pages/auth-v2-login-illustration-bordered-dark.png'
-import authV2LoginIllustrationBorderedLight from '@images/pages/auth-v2-login-illustration-bordered-light.png'
 import authV2LoginIllustrationDark from '@images/pages/auth-v2-login-illustration-dark.png'
 import authV2LoginIllustrationLight from '@images/pages/auth-v2-login-illustration-light.png'
 import authV2MaskDark from '@images/pages/misc-mask-dark.png'
@@ -10,40 +11,110 @@ import authV2MaskLight from '@images/pages/misc-mask-light.png'
 import { VNodeRenderer } from '@layouts/components/VNodeRenderer'
 import { themeConfig } from '@themeConfig'
 
+const authThemeImg = useGenerateImageVariant(authV2LoginIllustrationLight, authV2LoginIllustrationDark)
+
+const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
+
 definePage({
   meta: {
     layout: 'blank',
-    public: true,
+    unauthenticatedOnly: true,
   },
-})
-
-const form = ref({
-  email: '',
-  password: '',
-  remember: false,
 })
 
 const isPasswordVisible = ref(false)
 
-const authThemeImg = useGenerateImageVariant(
-  authV2LoginIllustrationLight,
-  authV2LoginIllustrationDark,
-  authV2LoginIllustrationBorderedLight,
-  authV2LoginIllustrationBorderedDark,
-  true)
+const route = useRoute()
+const router = useRouter()
 
-const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
+const ability = useAbility()
+
+const errors = ref<Record<string, string | undefined>>({
+  username: undefined,
+  password: undefined,
+})
+
+const refVForm = ref<VForm>()
+
+const credentials = ref({
+  username: 'admin',
+  password: 'admin',
+})
+
+const rememberMe = ref(false)
+
+const login = async () => {
+  try {
+    const res = await $api('/auth/admin/login', {
+      method: 'POST',
+      body: {
+        username: credentials.value.username,
+        password: credentials.value.password,
+      },
+      onResponseError({ response }) {
+        if (response.status === 401) {
+          errors.value.password = '用户名或密码错误'
+        } else {
+          errors.value = response._data.errors
+        }
+      },
+    })
+
+    const { token } = res
+
+    if (!token) {
+      console.error('Login failed: No token received')
+      return
+    }
+
+    useCookie('accessToken').value = token
+
+    // Fetch user details
+    try {
+      const userData = await $api('/admin/me')
+      useCookie('userData').value = userData
+      
+      // Set admin permissions
+      const userAbilityRules = [{ action: 'manage', subject: 'all' }]
+      useCookie('userAbilityRules').value = userAbilityRules
+      ability.update(userAbilityRules)
+
+      // Redirect to `to` query if exist or redirect to index route
+      // ❗ nextTick is required to wait for DOM updates and later redirect
+      await nextTick(() => {
+        router.replace(route.query.to ? String(route.query.to) : '/')
+      })
+    }
+    catch (e) {
+      console.error('Failed to fetch user info:', e)
+    }
+  }
+  catch (err) {
+    console.error(err)
+  }
+  finally {
+    isLoading.value = false
+  }
+}
+
+const onSubmit = () => {
+  refVForm.value?.validate()
+    .then(({ valid: isValid }) => {
+      if (isValid)
+        login()
+    })
+}
 </script>
 
 <template>
-  <a href="javascript:void(0)">
+  <RouterLink to="/">
     <div class="auth-logo d-flex align-center gap-x-3">
       <VNodeRenderer :nodes="themeConfig.app.logo" />
       <h1 class="auth-title">
         {{ themeConfig.app.title }}
       </h1>
     </div>
-  </a>
+  </RouterLink>
 
   <VRow
     no-gutters
@@ -66,7 +137,7 @@ const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
         </div>
 
         <img
-          class="auth-footer-mask flip-in-rtl"
+          class="auth-footer-mask"
           :src="authThemeMask"
           alt="auth-footer-mask"
           height="280"
@@ -82,96 +153,101 @@ const authThemeMask = useGenerateImageVariant(authV2MaskLight, authV2MaskDark)
     >
       <VCard
         flat
-        :max-width="500"
-        class="mt-12 mt-sm-0 pa-6"
+        :max-width="700"
+        class="mt-12 mt-sm-0 pa-4"
       >
         <VCardText>
           <h4 class="text-h4 mb-1">
-            Welcome to <span class="text-capitalize">{{ themeConfig.app.title }}</span>! 👋🏻
+            欢迎来到 <span class="text-capitalize"> {{ themeConfig.app.title }} </span>! 👋🏻
           </h4>
           <p class="mb-0">
-            Please sign-in to your account and start the adventure
+            请登录您的账户并开始冒险
           </p>
         </VCardText>
         <VCardText>
-          <VForm @submit.prevent="() => {}">
+          <VForm
+            ref="refVForm"
+            @submit.prevent="onSubmit"
+          >
             <VRow>
-              <!-- email -->
+              <!-- username -->
               <VCol cols="12">
                 <AppTextField
-                  v-model="form.email"
+                  v-model="credentials.username"
+                  label="用户名"
+                  placeholder="admin"
+                  type="text"
                   autofocus
-                  label="Email or Username"
-                  type="email"
-                  placeholder="johndoe@email.com"
+                  :rules="[requiredValidator]"
+                  :error-messages="errors.username"
                 />
               </VCol>
 
               <!-- password -->
               <VCol cols="12">
                 <AppTextField
-                  v-model="form.password"
-                  label="Password"
+                  v-model="credentials.password"
+                  label="密码"
                   placeholder="············"
+                  :rules="[requiredValidator]"
                   :type="isPasswordVisible ? 'text' : 'password'"
                   autocomplete="password"
+                  :error-messages="errors.password"
                   :append-inner-icon="isPasswordVisible ? 'tabler-eye-off' : 'tabler-eye'"
                   @click:append-inner="isPasswordVisible = !isPasswordVisible"
                 />
 
                 <div class="d-flex align-center flex-wrap justify-space-between my-6">
                   <VCheckbox
-                    v-model="form.remember"
-                    label="Remember me"
+                    v-model="rememberMe"
+                    label="记住我"
                   />
-                  <a
-                    class="text-primary"
-                    href="javascript:void(0)"
+                  <RouterLink
+                    class="text-primary ms-2 mb-1"
+                    :to="{ name: 'forgot-password' }"
                   >
-                    Forgot Password?
-                  </a>
+                    忘记密码？
+                  </RouterLink>
                 </div>
 
                 <VBtn
                   block
                   type="submit"
+                  :loading="isLoading"
                 >
-                  Login
+                  登录
                 </VBtn>
               </VCol>
 
               <!-- create account -->
-              <VCol
+              <!-- <VCol
                 cols="12"
-                class="text-body-1 text-center"
+                class="text-center"
               >
-                <span class="d-inline-block">
-                  New on our platform?
-                </span>
-                <a
-                  class="text-primary ms-1 d-inline-block text-body-1"
-                  href="javascript:void(0)"
+                <span>我们平台的新用户？</span>
+                <RouterLink
+                  class="text-primary ms-1"
+                  :to="{ name: 'register' }"
                 >
-                  Create an account
-                </a>
-              </VCol>
-
-              <VCol
+                  创建一个账户
+                </RouterLink>
+              </VCol> -->
+              <!-- <VCol
                 cols="12"
                 class="d-flex align-center"
               >
                 <VDivider />
-                <span class="mx-4">or</span>
+                <span class="mx-4">或</span>
                 <VDivider />
-              </VCol>
+              </VCol> -->
 
               <!-- auth providers -->
-              <VCol
+              <!-- <VCol
                 cols="12"
                 class="text-center"
               >
                 <AuthProvider />
-              </VCol>
+              </VCol> -->
             </VRow>
           </VForm>
         </VCardText>

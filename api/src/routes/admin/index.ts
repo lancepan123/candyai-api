@@ -2,7 +2,7 @@ import { FastifyInstance } from 'fastify';
 import { verifyJwt, verifyAdmin } from '../../middlewares/auth';
 import { createProduct } from '../../modules/products/products.service';
 import { getOrders } from '../../modules/orders/orders.service';
-import { getUsers, getUserById, updateUserBanStatus, getUserStats } from '../../modules/users/users.service';
+import { getUsers, getUserById, updateUserBanStatus, getUserStats, deleteUser, getRoles } from '../../modules/users/users.service';
 import { createAIModel, getAIModels, getAIModelById, updateAIModel, deleteAIModel, getAIModelStats } from '../../modules/ai-models/ai-models.service';
 import { getAdminById, updateAdminProfile, getAdmins, createAdmin, updateAdminStatus, logAdminAction, getAdminLogs } from '../../modules/admins/admins.service';
 import { z } from 'zod';
@@ -286,6 +286,22 @@ export async function adminRoutes(app: FastifyInstance) {
         return await getOrders();
     });
 
+    // Roles
+    app.withTypeProvider<ZodTypeProvider>().get('/roles', {
+        schema: {
+            tags: ['Admin Roles'],
+            description: '获取角色列表',
+            response: {
+                200: z.array(z.object({
+                    title: z.string(),
+                    value: z.string()
+                }))
+            }
+        }
+    }, async (req, reply) => {
+        return await getRoles();
+    });
+
     // Users
     app.withTypeProvider<ZodTypeProvider>().get('/users', {
         schema: {
@@ -294,11 +310,13 @@ export async function adminRoutes(app: FastifyInstance) {
             querystring: z.object({
                 page: z.string().optional().default('1').transform(Number),
                 limit: z.string().optional().default('10').transform(Number),
+                search: z.string().optional(),
+                role: z.string().optional(),
             })
         }
     }, async (req, reply) => {
-        const { page, limit } = req.query;
-        return await getUsers(page, limit);
+        const { page, limit, search, role } = req.query;
+        return await getUsers(page, limit, search, role);
     });
 
     app.withTypeProvider<ZodTypeProvider>().get('/users/stats', {
@@ -345,5 +363,21 @@ export async function adminRoutes(app: FastifyInstance) {
         const result = await updateUserBanStatus(id, isBanned);
         await logAdminAction(adminId, 'ban_user', { userId: id, isBanned });
         return result;
+    });
+
+    app.withTypeProvider<ZodTypeProvider>().delete('/users/:id', {
+        schema: {
+            tags: ['Admin Users'],
+            description: '删除用户',
+            params: z.object({
+                id: z.string().transform(Number),
+            })
+        }
+    }, async (req: any, reply) => {
+        const adminId = req.user.id;
+        const { id } = req.params;
+        await deleteUser(id);
+        await logAdminAction(adminId, 'delete_user', { userId: id });
+        return { message: 'User deleted successfully' };
     });
 }

@@ -32,30 +32,40 @@ const headers = [
 ]
 
 // 👉 Fetching users
-const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/apps/users', {
+const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/admin/users', {
   query: {
-    q: searchQuery,
-    status: selectedStatus,
-    plan: selectedPlan,
+    search: searchQuery,
+    // status: selectedStatus,
+    // plan: selectedPlan,
     role: selectedRole,
-    itemsPerPage,
+    limit: itemsPerPage,
     page,
-    sortBy,
-    orderBy,
+    // sortBy,
+    // orderBy,
   },
 }))
 
-const users = computed((): UserProperties[] => usersData.value.users)
-const totalUsers = computed(() => usersData.value.totalUsers)
+watch([searchQuery, selectedRole, itemsPerPage], () => {
+  page.value = 1 
+  fetchUsers()
+})
+
+watch(page, () => {
+  fetchUsers()
+})
+
+const users = computed((): UserProperties[] => usersData.value?.users || [])
+const totalUsers = computed(() => usersData.value?.totalUsers || 0)
 
 // 👉 search filters
-const roles = [
-  { title: 'Admin', value: 'admin' },
-  { title: 'Author', value: 'author' },
-  { title: 'Editor', value: 'editor' },
-  { title: 'Maintainer', value: 'maintainer' },
-  { title: 'Subscriber', value: 'subscriber' },
-]
+const { data: rolesData } = await useApi<any>('/admin/roles')
+const roles = computed(() => {
+  const data = rolesData.value || []
+  return [
+    { title: 'All', value: null },
+    ...data
+  ]
+})
 
 const plans = [
   { title: 'Basic', value: 'basic' },
@@ -93,7 +103,7 @@ const resolveUserStatusVariant = (stat: string) => {
     return 'warning'
   if (statLowerCase === 'active')
     return 'success'
-  if (statLowerCase === 'inactive')
+  if (statLowerCase === 'inactive' || statLowerCase === 'banned')
     return 'secondary'
 
   return 'primary'
@@ -112,20 +122,15 @@ const addNewUser = async (userData: UserProperties) => {
   fetchUsers()
 }
 
-// 👉 Delete user
-const deleteUser = async (id: number) => {
-  await $api(`/apps/users/${id}`, {
-    method: 'DELETE',
+// 👉 Ban user
+const banUser = async (id: number, isBanned: boolean) => {
+  await $api(`/admin/users/${id}/ban`, {
+    method: 'PATCH',
+    body: { isBanned }
   })
 
-  // Delete from selectedRows
-  const index = selectedRows.value.findIndex(row => row === id)
-  if (index !== -1)
-    selectedRows.value.splice(index, 1)
-
   // refetch User
-  // TODO: Make this async
-  fetchUsers()
+  await fetchUsers()
 }
 
 const widgetData = ref([
@@ -278,12 +283,12 @@ const widgetData = ref([
           </VBtn>
 
           <!-- 👉 Add user button -->
-          <VBtn
+          <!-- <VBtn
             prepend-icon="tabler-plus"
             @click="isAddNewUserDrawerVisible = true"
           >
             Add New User
-          </VBtn>
+          </VBtn> -->
         </div>
       </VCardText>
 
@@ -368,8 +373,8 @@ const widgetData = ref([
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <IconBtn @click="deleteUser(item.id)">
-            <VIcon icon="tabler-trash" />
+          <IconBtn @click="banUser(item.id, item.status !== 'banned')">
+            <VIcon :icon="item.status === 'banned' ? 'tabler-circle-check' : 'tabler-ban'" />
           </IconBtn>
 
           <IconBtn>
@@ -399,11 +404,11 @@ const widgetData = ref([
                   <VListItemTitle>Edit</VListItemTitle>
                 </VListItem>
 
-                <VListItem @click="deleteUser(item.id)">
+                <VListItem @click="banUser(item.id, item.status !== 'banned')">
                   <template #prepend>
-                    <VIcon icon="tabler-trash" />
+                    <VIcon :icon="item.status === 'banned' ? 'tabler-circle-check' : 'tabler-ban'" />
                   </template>
-                  <VListItemTitle>Delete</VListItemTitle>
+                  <VListItemTitle>{{ item.status === 'banned' ? 'Unban' : 'Ban' }}</VListItemTitle>
                 </VListItem>
               </VList>
             </VMenu>

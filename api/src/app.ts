@@ -20,7 +20,12 @@ export const buildApp = async () => {
   app.setSerializerCompiler(serializerCompiler);
 
   // Plugins
-  await app.register(cors);
+  await app.register(cors, {
+    origin: true, // Allow all origins
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
   // Helmet can sometimes block swagger UI resources, configure carefully or disable CSP for docs
   await app.register(helmet, {
       contentSecurityPolicy: false // Disabled for simplicity in dev/docs, enable with specific config in prod

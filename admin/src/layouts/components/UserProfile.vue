@@ -1,5 +1,27 @@
 <script setup lang="ts">
 import avatar1 from '@images/avatars/avatar-1.png'
+
+const router = useRouter()
+const userData = useCookie<any>('userData')
+
+const logout = async () => {
+  try {
+    await $api('/auth/admin/logout', {
+      method: 'POST',
+    })
+  }
+  catch (err) {
+    console.error(err)
+  }
+
+  // Remove "accessToken" from cookie
+  useCookie('accessToken').value = null
+  useCookie('userData').value = null
+  useCookie('userAbilityRules').value = null
+
+  // Redirect to login page
+  router.push('/login')
+}
 </script>
 
 <template>
@@ -16,7 +38,7 @@ import avatar1 from '@images/avatars/avatar-1.png'
       color="primary"
       variant="tonal"
     >
-      <VImg :src="avatar1" />
+      <VImg :src="userData?.avatarUrl || avatar1" />
 
       <!-- SECTION Menu -->
       <VMenu
@@ -41,22 +63,25 @@ import avatar1 from '@images/avatars/avatar-1.png'
                     color="primary"
                     variant="tonal"
                   >
-                    <VImg :src="avatar1" />
+                    <VImg :src="userData?.avatarUrl || avatar1" />
                   </VAvatar>
                 </VBadge>
               </VListItemAction>
             </template>
 
             <VListItemTitle class="font-weight-semibold">
-              John Doe
+              {{ userData?.username || 'Admin' }}
             </VListItemTitle>
-            <VListItemSubtitle>Admin</VListItemSubtitle>
+            <VListItemSubtitle>管理员</VListItemSubtitle>
           </VListItem>
 
           <VDivider class="my-2" />
 
           <!-- 👉 Profile -->
-          <VListItem link>
+          <VListItem
+            link
+            :to="{ name: 'user-profile-tab', params: { tab: 'profile' } }"
+          >
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -65,11 +90,14 @@ import avatar1 from '@images/avatars/avatar-1.png'
               />
             </template>
 
-            <VListItemTitle>Profile</VListItemTitle>
+            <VListItemTitle>个人资料</VListItemTitle>
           </VListItem>
 
           <!-- 👉 Settings -->
-          <VListItem link>
+          <VListItem
+            link
+            :to="{ name: 'account-settings-tab', params: { tab: 'account' } }"
+          >
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -78,11 +106,11 @@ import avatar1 from '@images/avatars/avatar-1.png'
               />
             </template>
 
-            <VListItemTitle>Settings</VListItemTitle>
+            <VListItemTitle>设置</VListItemTitle>
           </VListItem>
 
           <!-- 👉 Pricing -->
-          <VListItem link>
+          <!-- <VListItem link>
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -92,7 +120,7 @@ import avatar1 from '@images/avatars/avatar-1.png'
             </template>
 
             <VListItemTitle>Pricing</VListItemTitle>
-          </VListItem>
+          </VListItem> -->
 
           <!-- 👉 FAQ -->
           <VListItem link>
@@ -104,14 +132,14 @@ import avatar1 from '@images/avatars/avatar-1.png'
               />
             </template>
 
-            <VListItemTitle>FAQ</VListItemTitle>
+            <VListItemTitle>常见问题</VListItemTitle>
           </VListItem>
 
           <!-- Divider -->
           <VDivider class="my-2" />
 
           <!-- 👉 Logout -->
-          <VListItem to="/login">
+          <VListItem @click="logout">
             <template #prepend>
               <VIcon
                 class="me-2"
@@ -120,7 +148,7 @@ import avatar1 from '@images/avatars/avatar-1.png'
               />
             </template>
 
-            <VListItemTitle>Logout</VListItemTitle>
+            <VListItemTitle>退出登录</VListItemTitle>
           </VListItem>
         </VList>
       </VMenu>

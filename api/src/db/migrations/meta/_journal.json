@@ -64,6 +64,13 @@
       "when": 1769520261104,
       "tag": "0008_greedy_the_phantom",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1769527083780,
+      "tag": "0009_goofy_marvel_boy",
+      "breakpoints": true
     }
   ]
 }

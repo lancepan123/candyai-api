@@ -20,23 +20,23 @@ import { handlerPagesHelpCenter } from '@db/pages/help-center/index'
 import { handlerPagesProfile } from '@db/pages/profile/index'
 
 const worker = setupWorker(
-  ...handlerAppsEcommerce,
-  ...handlerAppsAcademy,
-  ...handlerAppsInvoice,
+  // ...handlerAppsEcommerce,
+  // ...handlerAppsAcademy,
+  // ...handlerAppsInvoice,
   ...handlerAppsUsers,
-  ...handlerAppsEmail,
-  ...handlerAppsCalendar,
-  ...handlerAppsChat,
-  ...handlerAppsPermission,
-  ...handlerPagesHelpCenter,
-  ...handlerPagesProfile,
-  ...handlerPagesFaq,
-  ...handlerPagesDatatable,
-  ...handlerAppBarSearch,
-  ...handlerAppLogistics,
+  // ...handlerAppsEmail,
+  // ...handlerAppsCalendar,
+  // ...handlerAppsChat,
+  // ...handlerAppsPermission,
+  // ...handlerPagesHelpCenter,
+  // ...handlerPagesProfile,
+  // ...handlerPagesFaq,
+  // ...handlerPagesDatatable,
+  // ...handlerAppBarSearch,
+  // ...handlerAppLogistics,
   ...handlerAuth,
-  ...handlerAppsKanban,
-  ...handlerDashboard,
+  // ...handlerAppsKanban,
+  // ...handlerDashboard,
 )
 
 export default function () {

@@ -4,6 +4,7 @@ import type { App } from 'vue'
 import type { RouteRecordRaw } from 'vue-router/auto'
 
 import { createRouter, createWebHistory } from 'vue-router/auto'
+import { canNavigate } from '@layouts/plugins/casl'
 
 function recursiveLayouts(route: RouteRecordRaw): RouteRecordRaw {
   if (route.children) {
@@ -27,6 +28,26 @@ const router = createRouter({
   extendRoutes: pages => [
     ...[...pages].map(route => recursiveLayouts(route)),
   ],
+})
+
+// Docs: https://router.vuejs.org/guide/advanced/navigation-guards.html#global-before-guards
+router.beforeEach(to => {
+  const isLoggedIn = !!(useCookie('userData').value && useCookie('accessToken').value)
+
+  if (to.meta.unauthenticatedOnly) {
+    if (isLoggedIn)
+      return '/'
+    else
+      return undefined
+  }
+
+  if (!canNavigate(to)) {
+    if (!isLoggedIn)
+      return { name: 'login' } as any
+
+    // If logged in => not authorized
+    return { name: 'not-authorized' } as any
+  }
 })
 
 export { router }

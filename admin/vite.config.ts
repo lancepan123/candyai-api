@@ -32,7 +32,7 @@ export default defineConfig({
         },
       },
     }),
-    VueDevTools(),
+    // VueDevTools(),
     vueJsx(),
 
     // Docs: https://github.com/vuetifyjs/vuetify-loader/tree/master/packages/vite-plugin
