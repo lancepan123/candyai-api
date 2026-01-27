@@ -10,9 +10,9 @@ export const getUsers = async (page: number = 1, limit: number = 10) => {
         db.select({
             id: users.id,
             username: users.username,
-            email: users.email,
+            phone: users.phone,
             avatarUrl: users.avatarUrl,
-            isBanned: users.isBanned,
+            status: users.status,
             role: roles.name,
             createdAt: users.createdAt,
             updatedAt: users.updatedAt
@@ -39,9 +39,9 @@ export const getUserById = async (id: number) => {
     const user = await db.select({
         id: users.id,
         username: users.username,
-        email: users.email,
+        phone: users.phone,
         avatarUrl: users.avatarUrl,
-        isBanned: users.isBanned,
+        status: users.status,
         role: roles.name,
         createdAt: users.createdAt,
         updatedAt: users.updatedAt
@@ -59,6 +59,7 @@ export const getUserById = async (id: number) => {
 };
 
 export const updateUserBanStatus = async (id: number, isBanned: boolean) => {
-    await db.update(users).set({ isBanned }).where(eq(users.id, id));
-    return { message: `User ${isBanned ? 'banned' : 'unbanned'} successfully` };
+    const status = isBanned ? 'banned' : 'active';
+    await db.update(users).set({ status }).where(eq(users.id, id));
+    return { message: `User ${status} successfully` };
 };
