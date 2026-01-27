@@ -4,19 +4,24 @@ import { admins } from '../../db/schema/admins';
 import { eq } from 'drizzle-orm';
 import bcrypt from 'bcrypt';
 import { FastifyInstance } from 'fastify';
+import { ensureWallet } from '../wallets/wallets.service';
 
 export const registerUser = async (app: FastifyInstance, body: any) => {
     const { username, phone, password, avatarUrl } = body;
     const hashedPassword = await bcrypt.hash(password, 10);
     
     try {
-        await db.insert(users).values({
+        const [result] = await db.insert(users).values({
             username,
             phone,
             passwordHash: hashedPassword,
             avatarUrl,
             status: 'active'
         });
+        
+        // Create wallet for new user
+        await ensureWallet(result.insertId);
+        
         return { message: 'User registered' };
     } catch (e) {
         throw new Error('User already exists');

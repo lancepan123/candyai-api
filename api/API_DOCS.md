@@ -1,7 +1,7 @@
 # CandyAI API 文档
 
-**Base URL**: `http://localhost:3000`
-**Documentation UI**: `http://localhost:3000/documentation`
+**Base URL**: `http://localhost:3005`
+**Documentation UI**: `http://localhost:3005/documentation`
 
 ## 1. 认证 (Auth)
 
@@ -91,4 +91,20 @@
 ## 3. 用户接口 (User)
 **Headers**: `Authorization: Bearer <user_token>`
 
-*(此处根据实际 userRoutes 内容补充，通常包含获取个人信息、下单等)*
+### 钱包 (Wallet)
+- **获取钱包信息**: `GET /api/me/wallet`
+  - Response:
+    ```json
+    {
+      "id": 1,
+      "userId": 1,
+      "balance": "100.00",
+      "currency": "CNY",
+      "credits": 500
+    }
+    ```
+- **钱包充值 (模拟)**: `POST /api/me/wallet/topup`
+  - Body: `{ "amount": 100 }`
+- **积分兑换**: `POST /api/me/wallet/exchange-credits`
+  - Body: `{ "amount": 10 }` (花费 10 CNY 兑换 100 Credits)
+  - Response: 更新后的钱包信息

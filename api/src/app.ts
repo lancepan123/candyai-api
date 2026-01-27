@@ -8,6 +8,7 @@ import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fast
 import { authRoutes } from './modules/auth/auth.routes';
 import { adminRoutes } from './routes/admin';
 import { userRoutes } from './routes/user';
+import { walletRoutes } from './routes/user/wallet';
 
 export const buildApp = async () => {
   const app = Fastify({
@@ -49,6 +50,8 @@ export const buildApp = async () => {
             type: 'http',
             scheme: 'bearer',
             bearerFormat: 'JWT',
+            // @ts-ignore
+            description: 'Enter your bearer token in the format **Bearer &lt;token&gt;**',
           },
         },
       },
@@ -65,6 +68,7 @@ export const buildApp = async () => {
   await app.register(authRoutes, { prefix: '/api/auth' });
   await app.register(adminRoutes, { prefix: '/api/admin' });
   await app.register(userRoutes, { prefix: '/api/user' });
+  await app.register(walletRoutes, { prefix: '/api/me' }); // Wallet routes under /api/me
 
   // Health Check
   app.get('/health', async () => {
