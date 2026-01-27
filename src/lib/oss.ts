@@ -4,7 +4,8 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 // Check if OSS config is present to avoid errors during dev if not needed immediately
-const isOssConfigured = process.env.OSS_ACCESS_KEY_ID && process.env.OSS_ACCESS_KEY_SECRET;
+// const isOssConfigured = process.env.OSS_ACCESS_KEY_ID && process.env.OSS_ACCESS_KEY_SECRET;
+const isOssConfigured = false; // Temporarily disabled for GitHub push
 
 export const ossClient = isOssConfigured ? new OSS({
   region: process.env.OSS_REGION,
