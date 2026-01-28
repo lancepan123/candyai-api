@@ -25,8 +25,23 @@ export const useApi = createFetch({
     afterFetch(ctx) {
       const { data, response } = ctx
 
-      // Parse data if it's JSON
+      // Handle 401 errors
+      if (response.status === 401) {
+        const accessToken = useCookie('accessToken')
+        const userData = useCookie('userData')
+        
+        accessToken.value = null
+        userData.value = null
+        
+        // Only redirect if not already on login page
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login'
+        }
+        
+        return { data: null, response }
+      }
 
+      // Parse data if it's JSON
       let parsedData = null
       try {
         parsedData = destr(data)

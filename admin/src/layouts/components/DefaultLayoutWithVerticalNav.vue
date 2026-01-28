@@ -28,9 +28,9 @@ import { VerticalNavLayout } from '@layouts'
           />
         </IconBtn>
 
-        <NavbarThemeSwitcher />
-
         <VSpacer />
+
+        <NavbarThemeSwitcher />
 
         <NavBarI18n
           v-if="themeConfig.app.i18n.enable && themeConfig.app.i18n.langConfig?.length"

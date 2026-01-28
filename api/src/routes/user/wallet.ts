@@ -46,6 +46,9 @@ export async function walletRoutes(app: FastifyInstance) {
                     credits: z.number(),
                     createdAt: z.date().nullable(),
                     updatedAt: z.date().nullable(),
+                }),
+                400: z.object({
+                    message: z.string(),
                 })
             }
         }
@@ -73,6 +76,9 @@ export async function walletRoutes(app: FastifyInstance) {
                     credits: z.number(),
                     createdAt: z.date().nullable(),
                     updatedAt: z.date().nullable(),
+                }),
+                400: z.object({
+                    message: z.string(),
                 })
             }
         }

@@ -163,4 +163,60 @@ export const handlerAppsUsers = [
       { status: 201 },
     )
   }),
+
+  // 👉 Admin users endpoints
+  http.get(('/admin/users'), ({ request }) => {
+    const url = new URL(request.url)
+    const search = url.searchParams.get('search')
+    const role = url.searchParams.get('role')
+    const limit = url.searchParams.get('limit')
+    const page = url.searchParams.get('page')
+
+    // Simple filtering and pagination
+    let filteredUsers = db.users
+
+    if (role) {
+      filteredUsers = filteredUsers.filter(user => user.role === role)
+    }
+
+    if (search) {
+      filteredUsers = filteredUsers.filter(user => 
+        user.fullName.toLowerCase().includes(search.toLowerCase()) ||
+        user.email.toLowerCase().includes(search.toLowerCase())
+      )
+    }
+
+    const limitNum = limit ? parseInt(limit) : 10
+    const pageNum = page ? parseInt(page) : 1
+    const startIndex = (pageNum - 1) * limitNum
+    const endIndex = startIndex + limitNum
+
+    const paginatedUsers = filteredUsers.slice(startIndex, endIndex)
+
+    return HttpResponse.json({
+      users: paginatedUsers,
+      totalUsers: filteredUsers.length,
+      totalPages: Math.ceil(filteredUsers.length / limitNum),
+      currentPage: pageNum,
+    }, { status: 200 })
+  }),
+
+  http.get(('/admin/roles'), () => {
+    const roles = [...new Set(db.users.map(user => user.role))]
+    return HttpResponse.json(roles, { status: 200 })
+  }),
+
+  http.patch<PathParams>(('/admin/users/:id/ban'), ({ params, request }) => {
+    const userId = Number(params.id)
+    const { isBanned } = request.json() as any
+    
+    const userIndex = db.users.findIndex(user => user.id === userId)
+    if (userIndex === -1) {
+      return HttpResponse.json({ error: 'User not found' }, { status: 404 })
+    }
+
+    db.users[userIndex].status = isBanned ? 'banned' : 'active'
+    
+    return HttpResponse.json(db.users[userIndex], { status: 200 })
+  }),
 ]

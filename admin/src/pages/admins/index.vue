@@ -1,6 +1,5 @@
 <script setup lang="ts">
-import AddNewUserDrawer from '@/views/apps/user/list/AddNewUserDrawer.vue'
-import type { UserProperties } from '@/plugins/fake-api/handlers/apps/users/types'
+import AddNewAdminDrawer from '@/views/pages/admins/AddNewAdminDrawer.vue'
 
 // 👉 Store
 const searchQuery = ref('')
@@ -24,108 +23,54 @@ const updateOptions = (options: any) => {
 // Headers
 const headers = [
   { title: 'User', key: 'user' },
-  { title: 'Role', key: 'role' },
-  { title: 'Plan', key: 'plan' },
-  { title: 'Billing', key: 'billing' },
   { title: 'Status', key: 'status' },
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
-// 👉 Fetching users
-const { data: usersData, execute: fetchUsers } = await useApi<any>(createUrl('/admin/users', {
+// 👉 Fetching admins
+const { data: adminsData, execute: fetchAdmins } = await useApi<any>(createUrl('/admin/admins', {
   query: {
-    search: searchQuery,
-    status: selectedStatus,
-    plan: selectedPlan,
-    role: selectedRole,
-    limit: itemsPerPage,
-    page,
-    sortBy,
-    orderBy,
+    // search: searchQuery,
+    // limit: itemsPerPage,
+    // page,
   },
 }))
 
-const users = computed((): UserProperties[] => usersData.value?.users || [])
-const totalUsers = computed(() => usersData.value?.totalUsers || 0)
+watch([searchQuery, itemsPerPage], () => {
+  page.value = 1 
+  // fetchAdmins()
+})
 
-// 👉 search filters
-const roles = [
-  { title: 'Admin', value: 'admin' },
-  { title: 'Author', value: 'author' },
-  { title: 'Editor', value: 'editor' },
-  { title: 'Maintainer', value: 'maintainer' },
-  { title: 'Subscriber', value: 'subscriber' },
-]
+watch(page, () => {
+  // fetchAdmins()
+})
 
-const plans = [
-  { title: 'Basic', value: 'basic' },
-  { title: 'Company', value: 'company' },
-  { title: 'Enterprise', value: 'enterprise' },
-  { title: 'Team', value: 'team' },
-]
+const admins = computed(() => adminsData.value || [])
+const totalAdmins = computed(() => adminsData.value?.length || 0)
 
-const status = [
-  { title: 'Pending', value: 'pending' },
-  { title: 'Active', value: 'active' },
-  { title: 'Inactive', value: 'inactive' },
-]
+const isAddNewAdminDrawerVisible = ref(false)
 
-const resolveUserRoleVariant = (role: string) => {
-  const roleLowerCase = role?.toLowerCase() || 'subscriber'
-
-  if (roleLowerCase === 'subscriber')
-    return { color: 'success', icon: 'tabler-user' }
-  if (roleLowerCase === 'author')
-    return { color: 'error', icon: 'tabler-device-desktop' }
-  if (roleLowerCase === 'maintainer')
-    return { color: 'info', icon: 'tabler-chart-pie' }
-  if (roleLowerCase === 'editor')
-    return { color: 'warning', icon: 'tabler-edit' }
-  if (roleLowerCase === 'admin')
-    return { color: 'primary', icon: 'tabler-crown' }
-
-  return { color: 'primary', icon: 'tabler-user' }
-}
-
-const resolveUserStatusVariant = (stat: string) => {
-  const statLowerCase = stat?.toLowerCase() || 'pending'
-  if (statLowerCase === 'pending')
-    return 'warning'
-  if (statLowerCase === 'active')
-    return 'success'
-  if (statLowerCase === 'inactive')
-    return 'secondary'
-
-  return 'primary'
-}
-
-const isAddNewUserDrawerVisible = ref(false)
-
-// 👉 Add new user
-const addNewUser = async (userData: UserProperties) => {
-  await $api('/admin/users', {
+// 👉 Add new admin
+const addNewAdmin = async (adminData: any) => {
+  await $api('/admin/admins', {
     method: 'POST',
-    body: userData,
+    body: adminData,
   })
 
-  // Refetch User
-  fetchUsers()
+  // Refetch Admin
+  fetchAdmins()
 }
 
-// 👉 Delete user
-const deleteUser = async (id: number) => {
-  await $api(`/admin/users/${id}`, {
-    method: 'DELETE',
+// 👉 Ban admin
+const banAdmin = async (id: number, status: string) => {
+  const newStatus = status === 'active' ? 'banned' : 'active'
+  await $api(`/admin/admins/${id}/ban`, {
+    method: 'PATCH',
+    body: { status: newStatus }
   })
 
-  // Delete from selectedRows
-  const index = selectedRows.value.findIndex(row => row === id)
-  if (index !== -1)
-    selectedRows.value.splice(index, 1)
-
-  // refetch User
-  // TODO: Make this async
-  fetchUsers()
+  // refetch Admin
+  await fetchAdmins()
 }
 
 const widgetData = ref([
@@ -203,39 +148,39 @@ const widgetData = ref([
             cols="12"
             sm="4"
           >
-            <AppSelect
+            <!-- <AppSelect
               v-model="selectedRole"
               placeholder="Select Role"
               :items="roles"
               clearable
               clear-icon="tabler-x"
-            />
+            /> -->
           </VCol>
           <!-- 👉 Select Plan -->
           <VCol
             cols="12"
             sm="4"
           >
-            <AppSelect
+            <!-- <AppSelect
               v-model="selectedPlan"
               placeholder="Select Plan"
               :items="plans"
               clearable
               clear-icon="tabler-x"
-            />
+            /> -->
           </VCol>
           <!-- 👉 Select Status -->
           <VCol
             cols="12"
             sm="4"
           >
-            <AppSelect
+            <!-- <AppSelect
               v-model="selectedStatus"
               placeholder="Select Status"
               :items="status"
               clearable
               clear-icon="tabler-x"
-            />
+            /> -->
           </VCol>
         </VRow>
       </VCardText>
@@ -280,9 +225,9 @@ const widgetData = ref([
           <!-- 👉 Add user button -->
           <VBtn
             prepend-icon="tabler-plus"
-            @click="isAddNewUserDrawerVisible = true"
+            @click="isAddNewAdminDrawerVisible = true"
           >
-            Add New User
+            Add New Admin
           </VBtn>
         </div>
       </VCardText>
@@ -294,9 +239,9 @@ const widgetData = ref([
         v-model:items-per-page="itemsPerPage"
         v-model:model-value="selectedRows"
         v-model:page="page"
-        :items="users"
+        :items="admins"
         item-value="id"
-        :items-length="totalUsers"
+        :items-length="totalAdmins"
         :headers="headers"
         class="text-no-wrap"
         show-select
@@ -307,57 +252,29 @@ const widgetData = ref([
           <div class="d-flex align-center gap-x-4">
             <VAvatar
               size="34"
-              :variant="!item.avatar ? 'tonal' : undefined"
-              :color="!item.avatar ? resolveUserRoleVariant(item.role).color : undefined"
+              :variant="!item.avatarUrl ? 'tonal' : undefined"
+              color="primary"
             >
               <VImg
-                v-if="item.avatar"
-                :src="item.avatar"
+                v-if="item.avatarUrl"
+                :src="item.avatarUrl"
               />
-              <span v-else>{{ avatarText(item.fullName) }}</span>
+              <span v-else>{{ avatarText(item.username) }}</span>
             </VAvatar>
             <div class="d-flex flex-column">
               <h6 class="text-base">
-                <RouterLink
-                  :to="{ name: 'users-id', params: { id: item.id } }"
-                  class="font-weight-medium text-link"
-                >
-                  {{ item.fullName }}
-                </RouterLink>
+                <span class="font-weight-medium text-link">
+                  {{ item.username }}
+                </span>
               </h6>
-              <div class="text-sm">
-                {{ item.email }}
-              </div>
             </div>
-          </div>
-        </template>
-
-        <!-- 👉 Role -->
-        <template #item.role="{ item }">
-          <div class="d-flex align-center gap-x-2">
-            <VIcon
-              :size="22"
-              :icon="resolveUserRoleVariant(item.role).icon"
-              :color="resolveUserRoleVariant(item.role).color"
-            />
-
-            <div class="text-capitalize text-high-emphasis text-body-1">
-              {{ item.role }}
-            </div>
-          </div>
-        </template>
-
-        <!-- Plan -->
-        <template #item.plan="{ item }">
-          <div class="text-body-1 text-high-emphasis text-capitalize">
-            {{ item.currentPlan }}
           </div>
         </template>
 
         <!-- Status -->
         <template #item.status="{ item }">
           <VChip
-            :color="resolveUserStatusVariant(item.status)"
+            :color="item.status === 'active' ? 'success' : 'secondary'"
             size="small"
             label
             class="text-capitalize"
@@ -368,46 +285,9 @@ const widgetData = ref([
 
         <!-- Actions -->
         <template #item.actions="{ item }">
-          <IconBtn @click="deleteUser(item.id)">
-            <VIcon icon="tabler-trash" />
+          <IconBtn @click="banAdmin(item.id, item.status)">
+            <VIcon :icon="item.status === 'banned' ? 'tabler-circle-check' : 'tabler-ban'" />
           </IconBtn>
-
-          <IconBtn>
-            <VIcon icon="tabler-eye" />
-          </IconBtn>
-
-          <VBtn
-            icon
-            variant="text"
-            color="medium-emphasis"
-          >
-            <VIcon icon="tabler-dots-vertical" />
-            <VMenu activator="parent">
-              <VList>
-                <VListItem :to="{ name: 'users-id', params: { id: item.id } }">
-                  <template #prepend>
-                    <VIcon icon="tabler-eye" />
-                  </template>
-
-                  <VListItemTitle>View</VListItemTitle>
-                </VListItem>
-
-                <VListItem link>
-                  <template #prepend>
-                    <VIcon icon="tabler-pencil" />
-                  </template>
-                  <VListItemTitle>Edit</VListItemTitle>
-                </VListItem>
-
-                <VListItem @click="deleteUser(item.id)">
-                  <template #prepend>
-                    <VIcon icon="tabler-trash" />
-                  </template>
-                  <VListItemTitle>Delete</VListItemTitle>
-                </VListItem>
-              </VList>
-            </VMenu>
-          </VBtn>
         </template>
 
         <!-- pagination -->
@@ -415,16 +295,16 @@ const widgetData = ref([
           <TablePagination
             v-model:page="page"
             :items-per-page="itemsPerPage"
-            :total-items="totalUsers"
+            :total-items="totalAdmins"
           />
         </template>
       </VDataTableServer>
       <!-- SECTION -->
     </VCard>
-    <!-- 👉 Add New User -->
-    <AddNewUserDrawer
-      v-model:is-drawer-open="isAddNewUserDrawerVisible"
-      @user-data="addNewUser"
+    <!-- 👉 Add New Admin -->
+    <AddNewAdminDrawer
+      v-model:is-drawer-open="isAddNewAdminDrawerVisible"
+      @admin-data="addNewAdmin"
     />
   </section>
 </template>

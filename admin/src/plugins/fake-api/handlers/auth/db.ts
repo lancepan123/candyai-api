@@ -24,8 +24,8 @@ export const db: DB = {
   users: [
     {
       id: 1,
-      fullName: 'John Doe',
-      username: 'johndoe',
+      fullName: 'Admin User',
+      username: 'admin',
       password: 'admin',
 
       avatar: `${import.meta.env.BASE_URL ?? '/'}images/avatars/avatar-1.png`,

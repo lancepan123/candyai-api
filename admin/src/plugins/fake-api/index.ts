@@ -13,6 +13,7 @@ import { handlerAppLogistics } from '@db/apps/logistics/index'
 import { handlerAppsPermission } from '@db/apps/permission/index'
 import { handlerAppsUsers } from '@db/apps/users/index'
 import { handlerAuth } from '@db/auth/index'
+import { handlerAdminAdmins } from '@db/admin/admins'
 import { handlerDashboard } from '@db/dashboard/index'
 import { handlerPagesDatatable } from '@db/pages/datatable/index'
 import { handlerPagesFaq } from '@db/pages/faq/index'
@@ -35,8 +36,9 @@ const worker = setupWorker(
   // ...handlerAppBarSearch,
   // ...handlerAppLogistics,
   ...handlerAuth,
+  ...handlerAdminAdmins,
   // ...handlerAppsKanban,
-  // ...handlerDashboard,
+  ...handlerDashboard,
 )
 
 export default function () {

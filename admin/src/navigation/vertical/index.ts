@@ -10,8 +10,13 @@ export default [
     icon: { icon: 'tabler-users' },
   },
   {
+    title: '管理员管理',
+    to: { name: 'admins' },
+    icon: { icon: 'tabler-user' },
+  },
+  {
     title: '设置',
-    to: { name: 'settings' },
+    to: { name: 'account-settings-tab', params: { tab: 'account' } },
     icon: { icon: 'tabler-settings' },
   },
 ]

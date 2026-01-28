@@ -41,9 +41,10 @@ router.beforeEach(to => {
       return undefined
   }
 
+  // 临时取消权限检查
   if (!canNavigate(to)) {
     if (!isLoggedIn)
-      return { name: 'login' } as any
+      return { name: 'login', query: { to: to.path !== '/' ? to.fullPath : undefined } } as any
 
     // If logged in => not authorized
     return { name: 'not-authorized' } as any

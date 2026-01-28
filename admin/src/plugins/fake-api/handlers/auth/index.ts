@@ -48,4 +48,65 @@ export const handlerAuth = [
 
     return HttpResponse.json({ errors }, { status: 400 })
   }),
+
+  // 添加管理员登录的mock处理
+  http.post<PathParams>(('/api/auth/admin/login'), async ({ request }) => {
+    const { username, password } = await request.json() as { username: string; password: string }
+
+    let errors: Record<string, string[]> = {
+      username: ['Something went wrong'],
+    }
+
+    const user = db.users.find(u => u.username === username && u.password === password)
+
+    if (user) {
+      try {
+        const accessToken = db.userTokens[user.id]
+
+        // We are duplicating user here
+        const userData = { ...user }
+
+        const userOutData = Object.fromEntries(
+          Object.entries(userData)
+            .filter(
+              ([key, _]) => !(key === 'password' || key === 'abilityRules'),
+            ),
+        ) as UserOut['userData']
+
+        const response = {
+          token: accessToken,
+          userData: userOutData,
+        }
+
+        return HttpResponse.json(response,
+          { status: 200 })
+      }
+      catch (e: unknown) {
+        errors = { username: [e as string] }
+      }
+    }
+    else {
+      errors = { username: ['Invalid username or password'] }
+    }
+
+    return HttpResponse.json({ errors }, { status: 401 })
+  }),
+
+  // 添加获取管理员信息的mock处理
+  http.get<PathParams>(('/api/admin/me'), () => {
+    // 默认返回第一个用户（管理员）的信息
+    const user = db.users[0]
+    if (user) {
+      const userOutData = Object.fromEntries(
+        Object.entries({ ...user })
+          .filter(
+            ([key, _]) => !(key === 'password' || key === 'abilityRules'),
+          ),
+      ) as UserOut['userData']
+
+      return HttpResponse.json(userOutData, { status: 200 })
+    }
+
+    return HttpResponse.json({ error: 'User not found' }, { status: 404 })
+  }),
 ]

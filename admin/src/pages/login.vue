@@ -43,8 +43,12 @@ const credentials = ref({
 
 const rememberMe = ref(false)
 
+const isLoading = ref(false)
+
 const login = async () => {
+  isLoading.value = true
   try {
+    console.log('开始登录，用户名:', credentials.value.username)
     const res = await $api('/auth/admin/login', {
       method: 'POST',
       body: {
@@ -52,6 +56,7 @@ const login = async () => {
         password: credentials.value.password,
       },
       onResponseError({ response }) {
+        console.log('登录请求错误:', response.status, response._data)
         if (response.status === 401) {
           errors.value.password = '用户名或密码错误'
         } else {
@@ -59,8 +64,10 @@ const login = async () => {
         }
       },
     })
+    console.log('登录响应:', res)
 
     const { token } = res
+    console.log('获取到token:', token)
 
     if (!token) {
       console.error('Login failed: No token received')
@@ -68,29 +75,44 @@ const login = async () => {
     }
 
     useCookie('accessToken').value = token
+    console.log('设置accessToken cookie')
 
     // Fetch user details
     try {
-      const userData = await $api('/admin/me')
+      console.log('开始获取用户信息')
+      const userData = await $api('/admin/me', {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      })
+      console.log('获取用户信息成功:', userData)
       useCookie('userData').value = userData
       
       // Set admin permissions
       const userAbilityRules = [{ action: 'manage', subject: 'all' }]
-      useCookie('userAbilityRules').value = userAbilityRules
+      useCookie('userAbilityRules').value = userAbilityRules as any
       ability.update(userAbilityRules)
+      console.log('设置权限成功')
 
       // Redirect to `to` query if exist or redirect to index route
       // ❗ nextTick is required to wait for DOM updates and later redirect
       await nextTick(() => {
-        router.replace(route.query.to ? String(route.query.to) : '/')
+        console.log('开始跳转，目标:', route.query.to ? String(route.query.to) : '/')
+        const to = route.query.to ? String(route.query.to) : '/'
+        if (to === '/login') {
+          router.replace('/')
+        } else {
+          router.replace(to)
+        }
+        console.log('跳转完成')
       })
     }
     catch (e) {
-      console.error('Failed to fetch user info:', e)
+      console.error('获取用户信息失败:', e)
     }
   }
   catch (err) {
-    console.error(err)
+    console.error('登录过程出错:', err)
   }
   finally {
     isLoading.value = false

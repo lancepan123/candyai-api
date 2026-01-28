@@ -4,11 +4,13 @@ import helmet from '@fastify/helmet';
 import jwt from '@fastify/jwt';
 import swagger from '@fastify/swagger';
 import swaggerUi from '@fastify/swagger-ui';
+import multipart from '@fastify/multipart';
 import { jsonSchemaTransform, serializerCompiler, validatorCompiler } from 'fastify-type-provider-zod';
 import { authRoutes } from './modules/auth/auth.routes';
 import { adminRoutes } from './routes/admin';
 import { userRoutes } from './routes/user';
 import { walletRoutes } from './routes/user/wallet';
+import { uploadRoutes } from './routes/upload';
 
 export const buildApp = async () => {
   const app = Fastify({
@@ -26,6 +28,9 @@ export const buildApp = async () => {
     allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   });
+
+  await app.register(multipart);
+
   // Helmet can sometimes block swagger UI resources, configure carefully or disable CSP for docs
   await app.register(helmet, {
       contentSecurityPolicy: false // Disabled for simplicity in dev/docs, enable with specific config in prod
@@ -74,6 +79,7 @@ export const buildApp = async () => {
   await app.register(adminRoutes, { prefix: '/api/admin' });
   await app.register(userRoutes, { prefix: '/api/user' });
   await app.register(walletRoutes, { prefix: '/api/me' }); // Wallet routes under /api/me
+  await app.register(uploadRoutes, { prefix: '/api/admin' }); // Upload route under /api/admin
 
   // Health Check
   app.get('/health', async () => {
