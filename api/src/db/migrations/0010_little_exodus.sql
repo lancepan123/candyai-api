@@ -1,0 +1,19 @@
+CREATE INDEX `admin_id_idx` ON `admin_logs` (`admin_id`);--> statement-breakpoint
+CREATE INDEX `created_at_idx` ON `admin_logs` (`created_at`);--> statement-breakpoint
+CREATE INDEX `action_idx` ON `admin_logs` (`action`);--> statement-breakpoint
+CREATE INDEX `name_idx` ON `ai_models` (`name`);--> statement-breakpoint
+CREATE INDEX `status_idx` ON `ai_models` (`status`);--> statement-breakpoint
+CREATE INDEX `status_created_idx` ON `ai_models` (`status`,`created_at`);--> statement-breakpoint
+CREATE INDEX `order_id_idx` ON `order_items` (`order_id`);--> statement-breakpoint
+CREATE INDEX `product_id_idx` ON `order_items` (`product_id`);--> statement-breakpoint
+CREATE INDEX `user_id_idx` ON `orders` (`user_id`);--> statement-breakpoint
+CREATE INDEX `status_idx` ON `orders` (`status`);--> statement-breakpoint
+CREATE INDEX `created_at_idx` ON `orders` (`created_at`);--> statement-breakpoint
+CREATE INDEX `user_status_idx` ON `orders` (`user_id`,`status`);--> statement-breakpoint
+CREATE INDEX `name_idx` ON `products` (`name`);--> statement-breakpoint
+CREATE INDEX `status_idx` ON `products` (`status`);--> statement-breakpoint
+CREATE INDEX `status_created_idx` ON `products` (`status`,`created_at`);--> statement-breakpoint
+CREATE INDEX `username_idx` ON `users` (`username`);--> statement-breakpoint
+CREATE INDEX `status_idx` ON `users` (`status`);--> statement-breakpoint
+CREATE INDEX `role_id_idx` ON `users` (`role_id`);--> statement-breakpoint
+CREATE INDEX `status_created_idx` ON `users` (`status`,`created_at`);
