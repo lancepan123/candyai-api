@@ -9,19 +9,13 @@ export const ensureWallet = async (userId: number) => {
         return existing[0];
     }
     
-    // Create new wallet and return it in one go
-    // MySQL doesn't support RETURNING, so we still need to fetch after insert
-    const [result] = await db.insert(userWallets).values({ userId });
-    // Return the created wallet with default values
-    return {
-        id: result.insertId,
-        userId,
-        balance: '0.00',
-        currency: 'CNY',
-        credits: 0,
-        createdAt: new Date(),
-        updatedAt: new Date()
-    };
+    // Create new wallet
+    // MySQL doesn't support RETURNING, so we need to fetch after insert
+    await db.insert(userWallets).values({ userId });
+    
+    // Fetch the newly created wallet to ensure we return accurate data
+    const [newWallet] = await db.select().from(userWallets).where(eq(userWallets.userId, userId)).limit(1);
+    return newWallet;
 };
 
 export const getWalletByUserId = async (userId: number) => {
