@@ -67,7 +67,8 @@ export const logAdminAction = async (adminId: number, action: string, details?: 
     });
 };
 
-export const getAdminLogs = async (limit: number = 50) => {
+export const getAdminLogs = async (page: number = 1, limit: number = 50) => {
+    const offset = (page - 1) * limit;
     return await db.select({
         id: adminLogs.id,
         adminId: adminLogs.adminId,
@@ -80,5 +81,6 @@ export const getAdminLogs = async (limit: number = 50) => {
     .from(adminLogs)
     .leftJoin(admins, eq(adminLogs.adminId, admins.id))
     .orderBy(desc(adminLogs.createdAt))
-    .limit(limit);
+    .limit(limit)
+    .offset(offset);
 };

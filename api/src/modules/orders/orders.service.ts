@@ -1,7 +1,7 @@
 import { db } from '../../db';
 import { orders, orderItems } from '../../db/schema/orders';
 import { products } from '../../db/schema/products';
-import { eq, inArray } from 'drizzle-orm';
+import { eq, inArray, desc } from 'drizzle-orm';
 import { orderQueue } from './orders.queue';
 import { getIo } from '../../lib/socket';
 
@@ -63,6 +63,7 @@ export const createOrder = async (userId: number, items: { productId: number; qu
     return { orderId };
 };
 
-export const getOrders = async () => {
-    return await db.select().from(orders);
+export const getOrders = async (page: number = 1, limit: number = 20) => {
+    const offset = (page - 1) * limit;
+    return await db.select().from(orders).limit(limit).offset(offset).orderBy(desc(orders.createdAt));
 };
