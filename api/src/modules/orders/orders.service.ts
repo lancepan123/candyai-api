@@ -44,7 +44,7 @@ export const createOrder = async (userId: number, items: { productId: number; qu
             }
             return null;
         })
-        .filter(Boolean) as any[];
+        .filter((item): item is NonNullable<typeof item> => item !== null);
     
     if (orderItemsValues.length > 0) {
         await db.insert(orderItems).values(orderItemsValues);

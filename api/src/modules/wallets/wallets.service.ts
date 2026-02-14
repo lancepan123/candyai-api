@@ -26,14 +26,14 @@ export const updateWalletBalance = async (userId: number, amount: number) => {
     // Ensure wallet exists first
     await ensureWallet(userId);
     
-    // Use SQL increment to be safe with concurrent updates and return updated wallet in same query
+    // Use SQL increment to be safe with concurrent updates
     await db.update(userWallets)
         .set({ 
             balance: sql`${userWallets.balance} + ${amount}` 
         })
         .where(eq(userWallets.userId, userId));
     
-    // Fetch and return the updated wallet - combined with ensure check above = 2-3 queries total
+    // Fetch and return the updated wallet - total 2-3 queries depending on wallet existence
     const [wallet] = await db.select().from(userWallets).where(eq(userWallets.userId, userId)).limit(1);
     return wallet;
 };
@@ -48,7 +48,7 @@ export const updateWalletCredits = async (userId: number, credits: number) => {
         })
         .where(eq(userWallets.userId, userId));
     
-    // Fetch and return the updated wallet - combined with ensure check above = 2-3 queries total
+    // Fetch and return the updated wallet - total 2-3 queries depending on wallet existence
     const [wallet] = await db.select().from(userWallets).where(eq(userWallets.userId, userId)).limit(1);
     return wallet;
 };
