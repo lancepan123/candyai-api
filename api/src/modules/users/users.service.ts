@@ -57,7 +57,10 @@ export const getUsers = async (
         .limit(limit)
         .offset(offset)
         .orderBy(desc(users.createdAt)),
-        db.select({ count: count() }).from(users).leftJoin(roles, eq(users.roleId, roles.id)).where(whereClause)
+        // Count query - only join roles if role filter is specified
+        role 
+            ? db.select({ count: count() }).from(users).leftJoin(roles, eq(users.roleId, roles.id)).where(whereClause)
+            : db.select({ count: count() }).from(users).where(whereClause)
     ]);
 
     return {
