@@ -71,6 +71,13 @@
       "when": 1769527083780,
       "tag": "0009_goofy_marvel_boy",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1771106682872,
+      "tag": "0010_little_exodus",
+      "breakpoints": true
     }
   ]
 }
