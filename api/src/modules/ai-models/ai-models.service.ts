@@ -1,6 +1,6 @@
 import { db } from '../../db';
 import { aiModels } from '../../db/schema/ai_models';
-import { eq, desc, like, or } from 'drizzle-orm';
+import { eq, desc, like, or, count, sql } from 'drizzle-orm';
 import { v4 as uuidv4 } from 'uuid';
 
 export const getAIModels = async (page: number = 1, limit: number = 20, search?: string, status?: 'active' | 'inactive' | 'error') => {
@@ -40,11 +40,16 @@ export const deleteAIModel = async (id: string) => {
 };
 
 export const getAIModelStats = async () => {
-    // Simplified stats for now
-    const all = await db.select().from(aiModels);
+    // Use SQL aggregation instead of fetching all models
+    const [result] = await db.select({
+        total: count(),
+        active: sql<number>`SUM(CASE WHEN ${aiModels.status} = 'active' THEN 1 ELSE 0 END)`,
+        error: sql<number>`SUM(CASE WHEN ${aiModels.status} = 'error' THEN 1 ELSE 0 END)`,
+    }).from(aiModels);
+    
     return {
-        total: all.length,
-        active: all.filter(m => m.status === 'active').length,
-        error: all.filter(m => m.status === 'error').length,
+        total: result.total,
+        active: result.active || 0,
+        error: result.error || 0,
     };
 };
